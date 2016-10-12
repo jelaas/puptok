@@ -1,0 +1,8 @@
+Reads node manifest on stdin.
+Exit code 1 on failure.
+
+-v for verbose.
+
+$ ./pup < n.pp
+SYNTAX OK
+GRAMMAR OK
