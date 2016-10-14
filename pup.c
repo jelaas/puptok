@@ -13,7 +13,7 @@
 #include "tok.h"
 
 struct {
-	int verbose;
+	int verbose, files;
 	int quiet, silent;
 } conf;
 
@@ -22,43 +22,19 @@ struct {
 	int paren, arr, mas, global, topmas, topmasline;
 } var;
 
-int main(int argc, char **argv)
+int check(struct tok *t)
 {
 	int token, rc=0;
-	struct tok t;
 	char buf[256];
 
-	while(argc > 1) {
-		if(strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
-			printf("Usage: pup [-v] [-h] [-q] [-s]\n"
-			       " -v        verbose\n"
-			       " -h        help\n"
-			       " -q        quiet\n"
-			       " -s        completely silent\n\n"
-			       " Expects puppet node manifest on stdin.\n");
-			exit(0);
-		}
-		if(!strcmp(argv[1], "-q")) conf.quiet = 1;
-		if(!strcmp(argv[1], "-s")) conf.quiet = conf.silent = 1;
-		if(!strcmp(argv[1], "-v")) conf.verbose++;
-		if(!strcmp(argv[1], "--verbose")) conf.verbose++;
-		argc--;
-		argv++;
-	}
-
-	memset(&t, 0, sizeof(struct tok));
-	t.state = SPACE;
-	t.f = stdin;
-	t.line = 1;
-	
-	if(conf.verbose) printf("\n%d ", t.line);
+	if(conf.verbose) printf("\n%d ", t->line);
 	while(token != TEOF) {
-		token = tok(&t);
+		token = tok(t);
 		if(token == NODE) var.nodes++;
 		if(token == LMAS) {
 			if(var.mas == 0) {
 				var.topmas++;
-				var.topmasline = t.line;
+				var.topmasline = t->line;
 			}
 			var.mas++;
 		}
@@ -67,16 +43,16 @@ int main(int argc, char **argv)
 		if(token == RARR) var.arr--;
 		if(token == LPAREN) var.paren++;
 		if(token == RPAREN) var.paren--;
-		if(token == STR && var.mas == 0 && var.global == 0) var.global = t.line;
+		if(token == STR && var.mas == 0 && var.global == 0) var.global = t->line;
 		if(token == ERR) {
 			if(conf.verbose) printf("\n");
 			fflush(stdout);
-			if(!conf.silent) fprintf(stderr, "SYNTAX ERROR! Line %d at: %s\n", t.line, fgets(buf, sizeof(buf), t.f));
-			exit(1);
+			if(!conf.silent) fprintf(stderr, "SYNTAX ERROR! Line %d at: %s\n", t->line, fgets(buf, sizeof(buf), t->f));
+			return 1;
 		}
 		if(conf.verbose) {
 			printf("%s ", tokname(token));
-			if(token == NEWLINE) printf("\n%d ", t.line);
+			if(token == NEWLINE) printf("\n%d ", t->line);
 		}
 	}
 	if(conf.verbose) printf("\n");
@@ -112,5 +88,72 @@ int main(int argc, char **argv)
 	if(rc == 0) {
 		if(!conf.quiet) fprintf(stderr, "GRAMMAR OK\n");
 	}
+	return rc;
+}
+
+
+int main(int argc, char **argv)
+{
+	int rc=0;
+	struct tok t;
+
+	while(argc > 1) {
+		if(strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+			printf("Usage: pup [-v] [-h] [-q] [-s]\n"
+			       " -v        verbose\n"
+			       " -h        help\n"
+			       " -q        quiet\n"
+			       " --files   read filenames on stdin. check each file\n"
+			       " -s        completely silent\n\n"
+			       " Expects puppet node manifest on stdin.\n");
+			exit(0);
+		}
+		if(!strcmp(argv[1], "-q")) conf.quiet = 1;
+		if(!strcmp(argv[1], "-s")) conf.quiet = conf.silent = 1;
+		if(!strcmp(argv[1], "-v")) conf.verbose++;
+		if(!strcmp(argv[1], "--files")) conf.files = 1;
+		if(!strcmp(argv[1], "--verbose")) conf.verbose++;
+		argc--;
+		argv++;
+	}
+
+	if(!conf.files) {
+		memset(&t, 0, sizeof(struct tok));
+		t.state = SPACE;
+		t.f = stdin;
+		t.line = 1;
+		rc = check(&t);
+	}
+
+	if(conf.files) {
+		size_t fnsize = 2048;
+		char *fn, *p;
+		FILE *f;
+
+		fn = malloc(fnsize);
+		while(fgets(fn, fnsize, stdin)) {
+			if(!strchr(fn, '\n')) {
+				if(!conf.quiet) fprintf(stderr, "INPUT ERROR. MISSING NEWLINE IN %s\n", fn);
+				exit(2);
+			}
+			p = strrchr(fn, '\n');
+			*p = 0;
+			f = fopen(fn, "r");
+			if(!f) {
+				if(!conf.quiet) fprintf(stderr, "INPUT ERROR. Could not open file '%s'\n", fn);
+				exit(2);
+			}
+			memset(&t, 0, sizeof(struct tok));
+			t.state = SPACE;
+			t.f = f;
+			t.line = 1;
+
+			memset(&var, 0, sizeof(var));
+
+			rc |= check(&t);
+			fclose(f);
+		}
+	}
 	exit(rc);
 }
+
