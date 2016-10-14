@@ -22,7 +22,7 @@ struct {
 	int paren, arr, mas, global, topmas, topmasline;
 } var;
 
-int check(struct tok *t)
+int check(struct tok *t, const char *fn)
 {
 	int token, rc=0;
 	char buf[256];
@@ -47,7 +47,10 @@ int check(struct tok *t)
 		if(token == ERR) {
 			if(conf.verbose) printf("\n");
 			fflush(stdout);
-			if(!conf.silent) fprintf(stderr, "SYNTAX ERROR! Line %d at: %s\n", t->line, fgets(buf, sizeof(buf), t->f));
+			if(!conf.silent) {
+				if(fn) fprintf(stderr, "%s: ", fn);
+				fprintf(stderr, "SYNTAX ERROR! Line %d at: %s\n", t->line, fgets(buf, sizeof(buf), t->f));
+			}
 			return 1;
 		}
 		if(conf.verbose) {
@@ -56,37 +59,64 @@ int check(struct tok *t)
 		}
 	}
 	if(conf.verbose) printf("\n");
-	if(!conf.quiet) fprintf(stderr, "SYNTAX OK\n");
+	if(!conf.quiet) {
+		if(fn) fprintf(stderr, "%s: ", fn);
+		fprintf(stderr, "SYNTAX OK\n");
+	}
 	if(var.nodes > 1) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Multiple node definitions!\n");
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Multiple node definitions!\n");
+		}
 		rc = 1;
 	}
 	if(var.nodes == 0) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Node definition missing!\n");
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Node definition missing!\n");
+		}
 		rc = 1;
 	}
 	if(var.mas) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Unbalanced {} !\n");
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Unbalanced {} !\n");
+		}
 		rc = 1;
 	}
 	if(var.arr) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Unbalanced [] !\n");
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Unbalanced [] !\n");
+		}
 		rc = 1;
 	}
 	if(var.paren) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Unbalanced () !\n");
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Unbalanced () !\n");
+		}
 		rc = 1;
 	}
 	if(var.global) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Multiple GLOBAL definitions at line: %d!\n", var.global);
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Multiple GLOBAL definitions at line: %d!\n", var.global);
+		}
 		rc = 1;
 	}
 	if(var.topmas > 1) {
-		if(!conf.silent) fprintf(stderr, "GRAMMAR ERROR! Multiple GLOBAL definitions at line: %d!\n", var.topmasline);
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Multiple GLOBAL definitions at line: %d!\n", var.topmasline);
+		}
 		rc = 1;
 	}
 	if(rc == 0) {
-		if(!conf.quiet) fprintf(stderr, "GRAMMAR OK\n");
+		if(!conf.quiet) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR OK\n");
+		}
 	}
 	return rc;
 }
@@ -122,7 +152,7 @@ int main(int argc, char **argv)
 		t.state = SPACE;
 		t.f = stdin;
 		t.line = 1;
-		rc = check(&t);
+		rc = check(&t, (void*)0);
 	}
 
 	if(conf.files) {
@@ -150,7 +180,7 @@ int main(int argc, char **argv)
 
 			memset(&var, 0, sizeof(var));
 
-			rc |= check(&t);
+			rc |= check(&t, fn);
 			fclose(f);
 		}
 	}
