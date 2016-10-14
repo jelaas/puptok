@@ -38,7 +38,9 @@ static char *toknames[] = {
   "EQUALS",
   "VAR",
   "MINUS",
-  "NODE"
+  "NODE",
+  "CLASS",
+  "DEFINE"
 };
 
 char *tokname(int token)
@@ -157,13 +159,14 @@ int tok(struct tok *t)
 			}
 			dtok(t, c);
 			if(t->count) {
+				int n = STR;
+				
 				t->count = 0;
-				if(!strcmp(t->val, "node")) {
-					t->val[0] = 0;
-					return NODE;
-				}
+				if(!strcmp(t->val, "node")) n = NODE;
+				if(!strcmp(t->val, "class")) n = CLASS;
+				if(!strcmp(t->val, "define")) n = DEFINE;
 				t->val[0] = 0;
-				return STR;
+				return n;
 			}			
 			break;
 		case VAR:

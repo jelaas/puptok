@@ -25,7 +25,9 @@ enum tokens {
   EQUALS,
   VAR,
   MINUS,
-  NODE
+  NODE,
+  CLASS,
+  DEFINE
 };
 
 struct tok {
