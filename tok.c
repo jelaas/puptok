@@ -46,7 +46,8 @@ static char *toknames[] = {
   "LESSTHAN",
   "MORETHAN",
   "LESSEQUALTHAN",
-  "MOREEQUALTHAN"
+  "MOREEQUALTHAN",
+  "PLUS"
 };
 
 char *tokname(int token)
@@ -122,6 +123,9 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == '>') {
 		t->state = MOREEQUALTHAN;
+	}
+	if(c == '+') {
+		t->state = PLUS;
 	}
 	return 0;
 }
@@ -433,6 +437,11 @@ int tok(struct tok *t)
 			getc(t->f);
 			t->state = SPACE;
 			return COMMA;
+			break;
+		case PLUS:
+			getc(t->f);
+			t->state = SPACE;
+			return PLUS;
 			break;
 		}
 	}

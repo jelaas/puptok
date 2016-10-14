@@ -33,7 +33,8 @@ enum tokens {
   LESSTHAN,
   MORETHAN,
   LESSEQUALTHAN,
-  MOREEQUALTHAN
+  MOREEQUALTHAN,
+  PLUS
 };
 
 struct tok {
