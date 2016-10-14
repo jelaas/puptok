@@ -34,8 +34,11 @@ int check(struct tok *t, const char *fn)
 		if(token != SPACE) prev = token;
 		token = tok(t);
 		if(token == NODE) var.nodes++;
-		if(token == CLASS) var.classes++;
-		if(token == DEFINE) {
+		if(token == CLASS && var.mas == 0) {
+			indefine = 1;
+			var.classes++;
+		}
+		if(token == DEFINE && var.mas == 0) {
 			indefine = 1;
 			var.defines++;
 		}
