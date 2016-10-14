@@ -431,8 +431,17 @@ int tok(struct tok *t)
 			return NEWLINE;
 			break;
 		case COLON:
-			getc(t->f);
-			t->state = SPACE;
+			if(t->count == 0) {
+				getc(t->f);
+				t->count++;
+				continue;
+			}
+			if(c == ':') {
+				t->state = STR;
+				continue;
+			}
+			dtok(t, c);
+			t->count = 0;
 			return COLON;
 			break;
 		case COMMA:

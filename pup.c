@@ -43,8 +43,8 @@ int check(struct tok *t, const char *fn)
 			var.defines++;
 		}
 		if(token == LMAS) {
-			indefine = 0;
-			if(var.mas == 0) {
+			if(var.paren == 0) indefine = 0;
+			if(indefine == 0 && var.mas == 0) {
 				var.topmas++;
 				var.topmasline = t->line;
 			}
@@ -55,7 +55,7 @@ int check(struct tok *t, const char *fn)
 		if(token == RARR) var.arr--;
 		if(token == LPAREN) var.paren++;
 		if(token == RPAREN) {
-			indefine = 0;
+			if(var.paren == 1) indefine = 0;
 			var.paren--;
 		}
 		if(token == STR && var.mas == 0 && var.global == 0 ) {
