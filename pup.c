@@ -13,25 +13,34 @@
 #include "tok.h"
 
 struct {
-	int verbose, files;
+	int verbose, files, module;
 	int quiet, silent;
 } conf;
 
 struct {
-	int nodes;
+	int nodes, classes, defines;
 	int paren, arr, mas, global, topmas, topmasline;
 } var;
 
 int check(struct tok *t, const char *fn)
 {
-	int token, rc=0;
+	int token = SPACE, rc=0;
 	char buf[256];
+	int prev = SPACE;
+	int indefine=0;
 
 	if(conf.verbose) printf("\n%d ", t->line);
 	while(token != TEOF) {
+		if(token != SPACE) prev = token;
 		token = tok(t);
 		if(token == NODE) var.nodes++;
+		if(token == CLASS) var.classes++;
+		if(token == DEFINE) {
+			indefine = 1;
+			var.defines++;
+		}
 		if(token == LMAS) {
+			indefine = 0;
 			if(var.mas == 0) {
 				var.topmas++;
 				var.topmasline = t->line;
@@ -42,8 +51,18 @@ int check(struct tok *t, const char *fn)
 		if(token == LARR) var.arr++;
 		if(token == RARR) var.arr--;
 		if(token == LPAREN) var.paren++;
-		if(token == RPAREN) var.paren--;
-		if(token == STR && var.mas == 0 && var.global == 0) var.global = t->line;
+		if(token == RPAREN) {
+			indefine = 0;
+			var.paren--;
+		}
+		if(token == STR && var.mas == 0 && var.global == 0 ) {
+			if(conf.module == 0)
+				var.global = t->line;
+			else {
+				if(indefine == 0 && prev != CLASS && prev != DEFINE)
+					var.global = t->line;
+			}
+		}
 		if(token == ERR) {
 			if(conf.verbose) printf("\n");
 			fflush(stdout);
@@ -63,17 +82,38 @@ int check(struct tok *t, const char *fn)
 		if(fn) fprintf(stderr, "%s: ", fn);
 		fprintf(stderr, "SYNTAX OK\n");
 	}
-	if(var.nodes > 1) {
+	if(conf.module == 0 && var.nodes > 1) {
 		if(!conf.silent) {
 			if(fn) fprintf(stderr, "%s: ", fn);
 			fprintf(stderr, "GRAMMAR ERROR! Multiple node definitions!\n");
 		}
 		rc = 1;
 	}
-	if(var.nodes == 0) {
+	if(conf.module && (var.classes + var.defines) > 1) {
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Multiple definitions in module!\n");
+		}
+		rc = 1;
+	}
+	if(conf.module && var.nodes) {
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Node definition in module!\n");
+		}
+		rc = 1;
+	}
+	if(conf.module == 0 && var.nodes == 0) {
 		if(!conf.silent) {
 			if(fn) fprintf(stderr, "%s: ", fn);
 			fprintf(stderr, "GRAMMAR ERROR! Node definition missing!\n");
+		}
+		rc = 1;
+	}
+	if(conf.module && (var.classes + var.defines) == 0) {
+		if(!conf.silent) {
+			if(fn) fprintf(stderr, "%s: ", fn);
+			fprintf(stderr, "GRAMMAR ERROR! Class or define missing!\n");
 		}
 		rc = 1;
 	}
@@ -108,7 +148,7 @@ int check(struct tok *t, const char *fn)
 	if(var.topmas > 1) {
 		if(!conf.silent) {
 			if(fn) fprintf(stderr, "%s: ", fn);
-			fprintf(stderr, "GRAMMAR ERROR! Multiple GLOBAL definitions at line: %d!\n", var.topmasline);
+			fprintf(stderr, "GRAMMAR ERROR! Multiple GLOBAL definitions in {} at line: %d!\n", var.topmasline);
 		}
 		rc = 1;
 	}
@@ -134,14 +174,20 @@ int main(int argc, char **argv)
 			       " -h        help\n"
 			       " -q        quiet\n"
 			       " --files   read filenames on stdin. check each file\n"
+			       " --module  check puppet module instead of node manifest\n"
 			       " -s        completely silent\n\n"
-			       " Expects puppet node manifest on stdin.\n");
+			       " Expects puppet node manifest on stdin.\n"
+			       " If --module is given check module manifest\n"
+				);
 			exit(0);
 		}
 		if(!strcmp(argv[1], "-q")) conf.quiet = 1;
 		if(!strcmp(argv[1], "-s")) conf.quiet = conf.silent = 1;
 		if(!strcmp(argv[1], "-v")) conf.verbose++;
 		if(!strcmp(argv[1], "--files")) conf.files = 1;
+		if(!strcmp(argv[1], "-m")) conf.module = 1;
+		if(!strcmp(argv[1], "--mod")) conf.module = 1;
+		if(!strcmp(argv[1], "--module")) conf.module = 1;
 		if(!strcmp(argv[1], "--verbose")) conf.verbose++;
 		argc--;
 		argv++;
