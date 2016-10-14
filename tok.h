@@ -27,7 +27,13 @@ enum tokens {
   MINUS,
   NODE,
   CLASS,
-  DEFINE
+  DEFINE,
+  NOTEQUALS,
+  NOT,
+  LESSTHAN,
+  MORETHAN,
+  LESSEQUALTHAN,
+  MOREEQUALTHAN
 };
 
 struct tok {

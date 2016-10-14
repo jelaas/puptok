@@ -40,7 +40,13 @@ static char *toknames[] = {
   "MINUS",
   "NODE",
   "CLASS",
-  "DEFINE"
+  "DEFINE",
+  "NOTEQUALS",
+  "NOT",
+  "LESSTHAN",
+  "MORETHAN",
+  "LESSEQUALTHAN",
+  "MOREEQUALTHAN"
 };
 
 char *tokname(int token)
@@ -99,6 +105,9 @@ static int dtok(struct tok *t, int c)
 	if(c == '=') {
 		t->state = PASSIGN;
 	}
+	if(c == '!') {
+		t->state = NOTEQUALS;
+	}
 	if(c == '-') {
 		t->state = ARROW;
 	}
@@ -107,6 +116,12 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == '$') {
 		t->state = VAR;
+	}
+	if(c == '<') {
+		t->state = LESSEQUALTHAN;
+	}
+	if(c == '>') {
+		t->state = MOREEQUALTHAN;
 	}
 	return 0;
 }
@@ -257,6 +272,63 @@ int tok(struct tok *t)
 			t->count = 0;
 			t->state = SPACE;
 			return EQUALS;
+			break;
+		case NOTEQUALS:
+			if(t->count == 0) {
+				getc(t->f);
+				t->count++;
+				continue;
+			}
+			if(t->count == 1) {
+				if(c == '=') {
+					getc(t->f);
+					t->count = 0;
+					t->state = SPACE;
+					return NOTEQUALS;
+				}
+			}
+			dtok(t, c);
+			t->count = 0;
+			t->state = SPACE;
+			return NOT;
+			break;
+		case LESSEQUALTHAN:
+			if(t->count == 0) {
+				getc(t->f);
+				t->count++;
+				continue;
+			}
+			if(t->count == 1) {
+				if(c == '=') {
+					getc(t->f);
+					t->count = 0;
+					t->state = SPACE;
+					return LESSEQUALTHAN;
+				}
+			}
+			dtok(t, c);
+			t->count = 0;
+			t->state = SPACE;
+			return LESSTHAN;
+			break;
+		case MOREEQUALTHAN:
+			if(t->count == 0) {
+				getc(t->f);
+				t->count++;
+				continue;
+			}
+			if(t->count == 1) {
+				if(c == '=') {
+					getc(t->f);
+					t->count = 0;
+					t->state = SPACE;
+					return MOREEQUALTHAN;
+				}
+			}
+			dtok(t, c);
+			t->count = 0;
+			t->state = SPACE;
+			return MORETHAN;
 			break;
 		case ARROW:
 			if(t->count == 0) {
