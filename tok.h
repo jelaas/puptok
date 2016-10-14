@@ -34,7 +34,8 @@ enum tokens {
   MORETHAN,
   LESSEQUALTHAN,
   MOREEQUALTHAN,
-  PLUS
+  PLUS,
+  INHERITS
 };
 
 struct tok {

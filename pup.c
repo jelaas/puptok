@@ -62,7 +62,7 @@ int check(struct tok *t, const char *fn)
 			if(conf.module == 0)
 				var.global = t->line;
 			else {
-				if(indefine == 0 && prev != CLASS && prev != DEFINE)
+				if(indefine == 0 && prev != CLASS && prev != DEFINE && prev != INHERITS)
 					var.global = t->line;
 			}
 		}

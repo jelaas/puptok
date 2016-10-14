@@ -47,7 +47,8 @@ static char *toknames[] = {
   "MORETHAN",
   "LESSEQUALTHAN",
   "MOREEQUALTHAN",
-  "PLUS"
+  "PLUS",
+  "INHERITS"
 };
 
 char *tokname(int token)
@@ -184,6 +185,7 @@ int tok(struct tok *t)
 				if(!strcmp(t->val, "node")) n = NODE;
 				if(!strcmp(t->val, "class")) n = CLASS;
 				if(!strcmp(t->val, "define")) n = DEFINE;
+				if(!strcmp(t->val, "inherits")) n = INHERITS;
 				t->val[0] = 0;
 				return n;
 			}			
