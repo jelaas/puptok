@@ -48,7 +48,8 @@ static char *toknames[] = {
   "LESSEQUALTHAN",
   "MOREEQUALTHAN",
   "PLUS",
-  "INHERITS"
+  "INHERITS",
+  "QMARK"
 };
 
 char *tokname(int token)
@@ -103,6 +104,9 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == ',') {
 		t->state = COMMA;
+	}
+	if(c == '?') {
+		t->state = QMARK;
 	}
 	if(c == '=') {
 		t->state = PASSIGN;
@@ -454,6 +458,10 @@ int tok(struct tok *t)
 			t->state = SPACE;
 			return PLUS;
 			break;
+		case QMARK:
+			getc(t->f);
+			t->state = SPACE;
+			return QMARK;
 		}
 	}
 	return t->state;

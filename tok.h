@@ -35,7 +35,8 @@ enum tokens {
   LESSEQUALTHAN,
   MOREEQUALTHAN,
   PLUS,
-  INHERITS
+  INHERITS,
+  QMARK
 };
 
 struct tok {
