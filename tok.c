@@ -49,7 +49,9 @@ static char *toknames[] = {
   "MOREEQUALTHAN",
   "PLUS",
   "INHERITS",
-  "QMARK"
+  "QMARK",
+  "PMATCH",
+  "NOTIFYARROW"
 };
 
 char *tokname(int token)
@@ -116,6 +118,9 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == '-') {
 		t->state = ARROW;
+	}
+	if(c == '~') {
+		t->state = NOTIFYARROW;
 	}
 	if(c == '/') {
 		t->state = CCOMMENT;
@@ -279,6 +284,14 @@ int tok(struct tok *t)
 					return PASSIGN;
 				}
 			}
+			if(t->count == 1) {
+				if(c == '~') {
+					getc(t->f);
+					t->count = 0;
+					t->state = SPACE;
+					return PMATCH;
+				}
+			}
 			dtok(t, c);
 			t->count = 0;
 			t->state = SPACE;
@@ -360,6 +373,21 @@ int tok(struct tok *t)
                         t->state = SPACE;
                         return MINUS;
 			break;
+		case NOTIFYARROW:
+			if(t->count == 0) {
+				getc(t->f);
+				t->count++;
+				continue;
+			}
+			if(t->count == 1) {
+				if(c == '>') {
+					getc(t->f);
+					t->count = 0;
+					t->state = SPACE;
+					return NOTIFYARROW;
+				}
+			}
+                        return ERR;
 		case CCOMMENT:
 			if(t->count == 0) {
 				getc(t->f);

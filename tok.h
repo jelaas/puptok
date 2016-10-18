@@ -36,7 +36,9 @@ enum tokens {
   MOREEQUALTHAN,
   PLUS,
   INHERITS,
-  QMARK
+  QMARK,
+  PMATCH,
+  NOTIFYARROW
 };
 
 struct tok {
