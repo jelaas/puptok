@@ -51,7 +51,8 @@ static char *toknames[] = {
   "INHERITS",
   "QMARK",
   "PMATCH",
-  "NOTIFYARROW"
+  "NOTIFYARROW",
+  "REGEX"
 };
 
 char *tokname(int token)
@@ -165,7 +166,7 @@ int tok(struct tok *t)
 				t->count = 0;
 				return NEWLINE;
 			}
-			if(isspace(c)) {
+   			if(isspace(c)) {
 				getc(t->f);
 				t->count++;
 				continue;
@@ -288,7 +289,9 @@ int tok(struct tok *t)
 				if(c == '~') {
 					getc(t->f);
 					t->count = 0;
-					t->state = SPACE;
+					t->state = REGEX;
+					t->phase = SPACE;
+					t->escape = 0;
 					return PMATCH;
 				}
 			}
@@ -296,6 +299,37 @@ int tok(struct tok *t)
 			t->count = 0;
 			t->state = SPACE;
 			return EQUALS;
+			break;
+		case REGEX:
+			switch(t->phase) {
+			case SPACE:
+				if(isspace(c)) {
+					getc(t->f);
+					t->count++;
+					continue;
+				}
+				if(c == '/') {
+					t->phase = DIV;
+					getc(t->f);
+					if(t->count) return SPACE;
+					continue;
+				}
+			case DIV:
+				if(c == '\\') {
+					t->escape = 1;
+					getc(t->f);
+					continue;
+				}
+				if(t->escape == 0 && c == '/') {
+					getc(t->f);
+					t->state = SPACE;
+					return REGEX;
+				}
+				getc(t->f);
+				t->escape = 0;
+				continue;
+			}
+			return ERR;
 			break;
 		case NOTEQUALS:
 			if(t->count == 0) {

@@ -38,7 +38,8 @@ enum tokens {
   INHERITS,
   QMARK,
   PMATCH,
-  NOTIFYARROW
+  NOTIFYARROW,
+  REGEX
 };
 
 struct tok {
@@ -47,7 +48,7 @@ struct tok {
   int state;
   int count;
   int line;
-  int eof, escape, prev;
+  int eof, escape, prev, phase;
   char val[16];
 };
 
