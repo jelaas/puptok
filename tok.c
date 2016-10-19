@@ -53,7 +53,8 @@ static char *toknames[] = {
   "PMATCH",
   "NOTIFYARROW",
   "REGEX",
-  "PNOTMATCH"
+  "PNOTMATCH",
+  "SEMICOLON"
 };
 
 char *tokname(int token)
@@ -105,6 +106,9 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == ':') {
 		t->state = COLON;
+	}
+	if(c == ';') {
+		t->state = SEMICOLON;
 	}
 	if(c == ',') {
 		t->state = COMMA;
@@ -528,6 +532,10 @@ int tok(struct tok *t)
 			getc(t->f);
 			t->state = SPACE;
 			return rettok(t, COMMA);
+		case SEMICOLON:
+			getc(t->f);
+			t->state = SPACE;
+			return rettok(t, SEMICOLON);
 		case PLUS:
 			getc(t->f);
 			t->state = SPACE;

@@ -40,7 +40,8 @@ enum tokens {
   PMATCH,
   NOTIFYARROW,
   REGEX,
-  PNOTMATCH
+  PNOTMATCH,
+  SEMICOLON
 };
 
 struct tok {
