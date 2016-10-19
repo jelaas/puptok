@@ -48,7 +48,7 @@ struct tok {
   int state;
   int count;
   int line;
-  int eof, escape, prev, phase;
+  int eof, escape, prev, phase, prevtok;
   char val[16];
 };
 

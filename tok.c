@@ -141,20 +141,26 @@ static int dtok(struct tok *t, int c)
 	return 0;
 }
 
+static int rettok(struct tok *t, int tok)
+{
+	t->prevtok = tok;
+	return tok;
+}
+
 int tok(struct tok *t)
 {
 	int c;
 	
 	while(t->state != ERR) {
-		if(t->eof) return TEOF;
+		if(t->eof) return rettok(t, TEOF);
 		c = getc(t->f);
 		if(c == -1) {
 			t->eof = 1;
-			if(t->state == SPACE) return t->state;
-			if(t->state == STR) return t->state;
-			if(t->state == NUM) return t->state;
-			if(t->state == HASHCOMMENT) return t->state;
-			return TEOF;
+			if(t->state == SPACE) return rettok(t, t->state);
+			if(t->state == STR) return rettok(t, t->state);
+			if(t->state == NUM) return rettok(t, t->state);
+			if(t->state == HASHCOMMENT) return rettok(t, t->state);
+			return rettok(t, TEOF);
 		}
 		ungetc(c, t->f);
 		
@@ -164,7 +170,7 @@ int tok(struct tok *t)
 				t->line++;
 				getc(t->f);
 				t->count = 0;
-				return NEWLINE;
+				return rettok(t, NEWLINE);
 			}
    			if(isspace(c)) {
 				getc(t->f);
@@ -197,7 +203,7 @@ int tok(struct tok *t)
 				if(!strcmp(t->val, "define")) n = DEFINE;
 				if(!strcmp(t->val, "inherits")) n = INHERITS;
 				t->val[0] = 0;
-				return n;
+				return rettok(t, n);
 			}			
 			break;
 		case VAR:
@@ -209,8 +215,8 @@ int tok(struct tok *t)
 			dtok(t, c);
 			if(t->count) {
 				t->count = 0;
-				return VAR;
-			}			
+				return rettok(t, VAR);
+			}
 			break;
 		case HASHCOMMENT:
 			if(c != '\n') {
@@ -220,7 +226,7 @@ int tok(struct tok *t)
 			}
 			t->state = SPACE;
 			t->count = 0;
-			return HASHCOMMENT;
+			return rettok(t, HASHCOMMENT);
 			break;
 		case STRLIT:
 			if(c != '\'' || t->escape) {
@@ -243,7 +249,7 @@ int tok(struct tok *t)
 			t->state = SPACE;
 			if(t->count) {
 				t->count = 0;
-				return STRLIT;
+				return rettok(t, STRLIT);
 			}
 			break;
 		case PSTRLIT:
@@ -268,7 +274,7 @@ int tok(struct tok *t)
 			t->state = SPACE;
 			if(t->count) {
 				t->count = 0;
-				return PSTRLIT;
+				return rettok(t, PSTRLIT);
 			}
 			break;
 		case PASSIGN:
@@ -282,7 +288,7 @@ int tok(struct tok *t)
 					getc(t->f);
 					t->count = 0;
 					t->state = SPACE;
-					return PASSIGN;
+					return rettok(t, PASSIGN);
 				}
 			}
 			if(t->count == 1) {
@@ -292,14 +298,13 @@ int tok(struct tok *t)
 					t->state = REGEX;
 					t->phase = SPACE;
 					t->escape = 0;
-					return PMATCH;
+					return rettok(t, PMATCH);
 				}
 			}
 			dtok(t, c);
 			t->count = 0;
 			t->state = SPACE;
-			return EQUALS;
-			break;
+			return rettok(t, EQUALS);
 		case REGEX:
 			switch(t->phase) {
 			case SPACE:
@@ -311,7 +316,7 @@ int tok(struct tok *t)
 				if(c == '/') {
 					t->phase = DIV;
 					getc(t->f);
-					if(t->count) return SPACE;
+					if(t->count) return rettok(t, SPACE);
 					continue;
 				}
 			case DIV:
@@ -323,14 +328,13 @@ int tok(struct tok *t)
 				if(t->escape == 0 && c == '/') {
 					getc(t->f);
 					t->state = SPACE;
-					return REGEX;
+					return rettok(t, REGEX);
 				}
 				getc(t->f);
 				t->escape = 0;
 				continue;
 			}
-			return ERR;
-			break;
+			return rettok(t, ERR);
 		case NOTEQUALS:
 			if(t->count == 0) {
 				getc(t->f);
@@ -342,14 +346,13 @@ int tok(struct tok *t)
 					getc(t->f);
 					t->count = 0;
 					t->state = SPACE;
-					return NOTEQUALS;
+					return rettok(t, NOTEQUALS);
 				}
 			}
 			dtok(t, c);
 			t->count = 0;
 			t->state = SPACE;
-			return NOT;
-			break;
+			return rettok(t, NOT);
 		case LESSEQUALTHAN:
 			if(t->count == 0) {
 				getc(t->f);
@@ -361,14 +364,13 @@ int tok(struct tok *t)
 					getc(t->f);
 					t->count = 0;
 					t->state = SPACE;
-					return LESSEQUALTHAN;
+					return rettok(t, LESSEQUALTHAN);
 				}
 			}
 			dtok(t, c);
 			t->count = 0;
 			t->state = SPACE;
-			return LESSTHAN;
-			break;
+			return rettok(t, LESSTHAN);
 		case MOREEQUALTHAN:
 			if(t->count == 0) {
 				getc(t->f);
@@ -380,14 +382,13 @@ int tok(struct tok *t)
 					getc(t->f);
 					t->count = 0;
 					t->state = SPACE;
-					return MOREEQUALTHAN;
+					return rettok(t, MOREEQUALTHAN);
 				}
 			}
 			dtok(t, c);
 			t->count = 0;
 			t->state = SPACE;
-			return MORETHAN;
-			break;
+			return rettok(t, MORETHAN);
 		case ARROW:
 			if(t->count == 0) {
 				getc(t->f);
@@ -399,13 +400,13 @@ int tok(struct tok *t)
 					getc(t->f);
 					t->count = 0;
 					t->state = SPACE;
-					return ARROW;
+					return rettok(t, ARROW);
 				}
 			}
 			dtok(t, c);
 			t->count = 0;
                         t->state = SPACE;
-                        return MINUS;
+                        return rettok(t, MINUS);
 			break;
 		case NOTIFYARROW:
 			if(t->count == 0) {
@@ -418,10 +419,10 @@ int tok(struct tok *t)
 					getc(t->f);
 					t->count = 0;
 					t->state = SPACE;
-					return NOTIFYARROW;
+					return rettok(t, NOTIFYARROW);
 				}
 			}
-                        return ERR;
+                        return rettok(t, ERR);
 		case CCOMMENT:
 			if(t->count == 0) {
 				getc(t->f);
@@ -433,21 +434,20 @@ int tok(struct tok *t)
 				if(c != '*') {
 					dtok(t, c);
 					t->count = 0;
-					return DIV;
+					return rettok(t, DIV);
 				}
 			}
 			if(c == '/' && t->prev == '*') {
 				getc(t->f);
 				t->count = 0;
 				t->state = SPACE;
-				return CCOMMENT;
+				return rettok(t, CCOMMENT);
 			}
 			t->prev = c;
 			getc(t->f);
 			t->count++;
 			if(c == '\n') t->line++;
 			continue;
-			break;
 		case NUM:
 			if(isdigit(c)) {
 				getc(t->f);
@@ -457,45 +457,38 @@ int tok(struct tok *t)
 			dtok(t, c);
 			if(t->count) {
 				t->count = 0;
-				return NUM;
-			}			
+				return rettok(t, NUM);
+			}
 			break;
 		case LMAS:
 			getc(t->f);
 			t->state = SPACE;
-			return LMAS;
-			break;
+			return rettok(t, LMAS);
 		case RMAS:
 			getc(t->f);
 			t->state = SPACE;
-			return RMAS;
-			break;
+			return rettok(t, RMAS);
 		case LPAREN:
 			getc(t->f);
 			t->state = SPACE;
-			return LPAREN;
-			break;
+			return rettok(t, LPAREN);
 		case RPAREN:
 			getc(t->f);
 			t->state = SPACE;
-			return RPAREN;
-			break;
+			return rettok(t, RPAREN);
 		case LARR:
 			getc(t->f);
 			t->state = SPACE;
-			return LARR;
-			break;
+			return rettok(t, LARR);
 		case RARR:
 			getc(t->f);
 			t->state = SPACE;
-			return RARR;
-			break;
+			return rettok(t, RARR);
 		case NEWLINE:
 			getc(t->f);
 			t->line++;
 			t->state = SPACE;
-			return NEWLINE;
-			break;
+			return rettok(t, NEWLINE);
 		case COLON:
 			if(t->count == 0) {
 				getc(t->f);
@@ -508,22 +501,19 @@ int tok(struct tok *t)
 			}
 			dtok(t, c);
 			t->count = 0;
-			return COLON;
-			break;
+			return rettok(t, COLON);
 		case COMMA:
 			getc(t->f);
 			t->state = SPACE;
-			return COMMA;
-			break;
+			return rettok(t, COMMA);
 		case PLUS:
 			getc(t->f);
 			t->state = SPACE;
-			return PLUS;
-			break;
+			return rettok(t, PLUS);
 		case QMARK:
 			getc(t->f);
 			t->state = SPACE;
-			return QMARK;
+			return rettok(t, QMARK);
 		}
 	}
 	return t->state;
