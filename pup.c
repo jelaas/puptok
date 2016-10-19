@@ -222,13 +222,13 @@ int main(int argc, char **argv)
 				if(!conf.quiet) fprintf(stderr, "INPUT ERROR. Could not open file '%s'\n", fn);
 				exit(2);
 			}
+			if(conf.verbose > 1) fprintf(stderr, "Processing file '%s'\n", fn);
 			memset(&t, 0, sizeof(struct tok));
 			t.state = SPACE;
 			t.f = f;
 			t.line = 1;
 
 			memset(&var, 0, sizeof(var));
-
 			rc |= check(&t, fn);
 			fclose(f);
 		}
