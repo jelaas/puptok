@@ -54,7 +54,12 @@ static char *toknames[] = {
   "NOTIFYARROW",
   "REGEX",
   "PNOTMATCH",
-  "SEMICOLON"
+  "SEMICOLON",
+  "RCOLL",
+  "RECOLL",
+  "LCOLL",
+  "LECOLL",
+  "LEFTSHIFT"
 };
 
 char *tokname(int token)
@@ -142,6 +147,9 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == '+') {
 		t->state = PLUS;
+	}
+	if(c == '|') {
+		t->state = RECOLL;
 	}
 	return 0;
 }
@@ -309,7 +317,6 @@ int tok(struct tok *t)
 			}
 			dtok(t, c);
 			t->count = 0;
-			t->state = SPACE;
 			return rettok(t, EQUALS);
 		case REGEX:
 			switch(t->phase) {
@@ -365,7 +372,6 @@ int tok(struct tok *t)
 			}
 			dtok(t, c);
 			t->count = 0;
-			t->state = SPACE;
 			return rettok(t, NOT);
 		case LESSEQUALTHAN:
 			if(t->count == 0) {
@@ -380,11 +386,55 @@ int tok(struct tok *t)
 					t->state = SPACE;
 					return rettok(t, LESSEQUALTHAN);
 				}
+				if(c == '|') {
+					getc(t->f);
+					t->count = 0;
+					t->state = SPACE;
+					return rettok(t, LCOLL);
+				}
+				if(c == '<') {
+					getc(t->f);
+					t->count = 0;
+					t->state = LEFTSHIFT;
+					continue;
+				}
 			}
 			dtok(t, c);
 			t->count = 0;
-			t->state = SPACE;
 			return rettok(t, LESSTHAN);
+		case RECOLL:
+			if(t->count == 0) {
+                                getc(t->f);
+                                t->count++;
+                                continue;
+                        }
+			if(t->count == 1) {
+				if(c == '>') {
+					getc(t->f);
+					t->count++;
+					continue;
+				}
+				return rettok(t, ERR);
+			}
+			if(c == '>') {
+				getc(t->f);
+				t->count = 0;
+				t->state = SPACE;
+				return rettok(t, RECOLL);
+			}
+			dtok(t, c);
+                        t->count = 0;
+			return rettok(t, RCOLL);
+		case LEFTSHIFT:
+			if(c == '|') {
+				getc(t->f);
+				t->count = 0;
+				t->state = SPACE;
+				return rettok(t, LECOLL);
+			}
+			dtok(t, c);
+			t->count = 0;
+			return rettok(t, LEFTSHIFT);
 		case MOREEQUALTHAN:
 			if(t->count == 0) {
 				getc(t->f);
@@ -401,7 +451,6 @@ int tok(struct tok *t)
 			}
 			dtok(t, c);
 			t->count = 0;
-			t->state = SPACE;
 			return rettok(t, MORETHAN);
 		case ARROW:
 			if(t->count == 0) {
@@ -419,7 +468,6 @@ int tok(struct tok *t)
 			}
 			dtok(t, c);
 			t->count = 0;
-                        t->state = SPACE;
                         return rettok(t, MINUS);
 			break;
 		case NOTIFYARROW:

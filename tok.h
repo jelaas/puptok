@@ -41,7 +41,12 @@ enum tokens {
   NOTIFYARROW,
   REGEX,
   PNOTMATCH,
-  SEMICOLON
+  SEMICOLON,
+  RCOLL,
+  RECOLL,
+  LCOLL,
+  LECOLL,
+  LEFTSHIFT
 };
 
 struct tok {
