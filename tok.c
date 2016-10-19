@@ -52,7 +52,8 @@ static char *toknames[] = {
   "QMARK",
   "PMATCH",
   "NOTIFYARROW",
-  "REGEX"
+  "REGEX",
+  "PNOTMATCH"
 };
 
 char *tokname(int token)
@@ -348,6 +349,14 @@ int tok(struct tok *t)
 					t->count = 0;
 					t->state = SPACE;
 					return rettok(t, NOTEQUALS);
+				}
+				if(c == '~') {
+					getc(t->f);
+					t->count = 0;
+					t->state = REGEX;
+					t->phase = SPACE;
+					t->escape = 0;
+					return rettok(t, PNOTMATCH);
 				}
 			}
 			dtok(t, c);

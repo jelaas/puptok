@@ -39,7 +39,8 @@ enum tokens {
   QMARK,
   PMATCH,
   NOTIFYARROW,
-  REGEX
+  REGEX,
+  PNOTMATCH
 };
 
 struct tok {
