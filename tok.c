@@ -143,7 +143,7 @@ static int dtok(struct tok *t, int c)
 
 static int rettok(struct tok *t, int tok)
 {
-	if(tok != SPACE && tok != NEWLINE)
+	if(tok != SPACE && tok != NEWLINE && tok != HASHCOMMENT && tok != CCOMMENT)
 		t->prevtok = tok;
 	return tok;
 }
