@@ -59,7 +59,9 @@ static char *toknames[] = {
   "RECOLL",
   "LCOLL",
   "LECOLL",
-  "LEFTSHIFT"
+  "LEFTSHIFT",
+  "ALPHA",
+  "MULT"
 };
 
 char *tokname(int token)
@@ -117,6 +119,12 @@ static int dtok(struct tok *t, int c)
 	}
 	if(c == ',') {
 		t->state = COMMA;
+	}
+	if(c == '@') {
+		t->state = ALPHA;
+	}
+	if(c == '*') {
+		t->state = MULT;
 	}
 	if(c == '?') {
 		t->state = QMARK;
@@ -580,6 +588,14 @@ int tok(struct tok *t)
 			getc(t->f);
 			t->state = SPACE;
 			return rettok(t, COMMA);
+		case ALPHA:
+			getc(t->f);
+			t->state = SPACE;
+			return rettok(t, ALPHA);
+		case MULT:
+			getc(t->f);
+			t->state = SPACE;
+			return rettok(t, MULT);
 		case SEMICOLON:
 			getc(t->f);
 			t->state = SPACE;

@@ -46,7 +46,9 @@ enum tokens {
   RECOLL,
   LCOLL,
   LECOLL,
-  LEFTSHIFT
+  LEFTSHIFT,
+  ALPHA,
+  MULT
 };
 
 struct tok {
