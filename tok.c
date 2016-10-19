@@ -143,7 +143,8 @@ static int dtok(struct tok *t, int c)
 
 static int rettok(struct tok *t, int tok)
 {
-	t->prevtok = tok;
+	if(tok != SPACE && tok != NEWLINE)
+		t->prevtok = tok;
 	return tok;
 }
 
@@ -180,7 +181,7 @@ int tok(struct tok *t)
 			dtok(t, c);
 			if(t->count) {
 				t->count = 0;
-				return SPACE;
+				return rettok(t, SPACE);
 			}
 			break;
 		case STR:
@@ -434,6 +435,18 @@ int tok(struct tok *t)
 				if(c != '*') {
 					dtok(t, c);
 					t->count = 0;
+					if(t->prevtok == RMAS ||
+					   t->prevtok == LMAS ||
+					   t->prevtok == LPAREN ||
+					   t->prevtok == LARR ||
+					   t->prevtok == EQUALS ||
+					   t->prevtok == COMMA
+						) {
+						t->state = REGEX;
+						t->phase = DIV;
+						t->count = 0;
+						continue;
+					}
 					return rettok(t, DIV);
 				}
 			}
