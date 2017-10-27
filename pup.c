@@ -220,7 +220,8 @@ int main(int argc, char **argv)
 			f = fopen(fn, "r");
 			if(!f) {
 				if(!conf.quiet) fprintf(stderr, "INPUT ERROR. Could not open file '%s'\n", fn);
-				exit(2);
+				rc |= 2;
+				continue;
 			}
 			if(conf.verbose > 1) fprintf(stderr, "Processing file '%s'\n", fn);
 			memset(&t, 0, sizeof(struct tok));
