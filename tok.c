@@ -256,6 +256,7 @@ int tok(struct tok *t)
 					t->escape = 1;
 				else
 					t->escape = 0;
+				if(c == '\n') t->line++;
 				getc(t->f);
 				t->count++;
 				continue;
